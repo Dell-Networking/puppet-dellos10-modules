@@ -1,0 +1,19 @@
+{
+  "name": "dellemcnetworking-dellos10",
+  "version": "0.1.1",
+  "author": "DellEMCNetworking",
+  "summary": "This module contains resources for managing network configurations in DellEMC OS10 Switches.",
+  "license": "Apache-2.0",
+  "source": "https://github.com/Dell-Networking/puppet-dellos10-modules",
+  "project_page": "https://github.com/Dell-Networking/puppet-dellos10-modules",
+  "issues_url": "https://github.com/Dell-Networking/puppet-dellos10-modules/issues",
+  "dependencies": [
+    {"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}
+  ],
+  "tags": [
+    "dell",
+    "dellemc",
+    "os10",
+    "network"
+  ]
+}
