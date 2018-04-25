@@ -1,0 +1,10 @@
+inherit_from: .rubocop_todo.yml
+
+Lint/BooleanSymbol:
+    Enabled: false
+
+Naming/UncommunicativeMethodParamName:
+    AllowedNames: is, af
+
+Metrics/MethodLength:
+    Enabled: false
