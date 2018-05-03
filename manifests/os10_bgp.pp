@@ -85,12 +85,18 @@ os10_bgp_neighbor{'test2':
 
 
 os10_bgp_neighbor_af{'testdc1-af':
-  ensure     => present,
-  require    => Os10_bgp_neighbor['testdc1'],
-  asn        => '65537',
-  neighbor   => '1.1.1.3',
-  type       => 'ip',
-  ip_ver     => 'ipv4',
-  activate   => 'true',
-  allowas_in => '9',
+  ensure                     => present,
+  require                    => Os10_bgp_neighbor['testdc1'],
+  asn                        => '65537',
+  neighbor                   => '1.1.1.3',
+  type                       => 'ip',
+  ip_ver                     => 'ipv4',
+  activate                   => 'true',
+  allowas_in                 => '9',
+  add_path                   => 'both 3',
+  next_hop_self              => 'true',
+  sender_side_loop_detection => 'true',
+  soft_reconfiguration       => 'true',
+  distribute_list            => ['IN', 'OUT'],
+  route_map                  => ['', 'OUT'],
 }

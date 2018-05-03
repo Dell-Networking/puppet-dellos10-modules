@@ -1,6 +1,6 @@
 {
   "name": "dellemcnetworking-dellos10",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "DellEMCNetworking",
   "summary": "This module contains resources for managing network configurations in DellEMC OS10 Switches.",
   "license": "Apache-2.0",
@@ -15,5 +15,13 @@
     "dellemc",
     "os10",
     "network"
+  ],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "OS10",
+      "operatingsystemrelease": [
+        "10.4.0E"
+      ]
+    }
   ]
 }

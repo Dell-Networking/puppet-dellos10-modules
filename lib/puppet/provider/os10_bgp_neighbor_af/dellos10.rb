@@ -29,7 +29,7 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
   # This is called only once during startup.
   # neighbor_ipname is an ip address when neighbor_type is ip.
   # neighbor_ipname is a name string when neighbor_type is template
-  def init(nbr_ipname, nbr_type)
+  def init(nbr_ipname, nbr_type, ip_ver)
     begin
       ret = esc 'show running-configuration bgp | display-xml'
       bgp = extract(ret, :stdout, 'rpc-reply', :data, :'bgp-router')
@@ -46,7 +46,7 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
       nbr = extract_peer(bgp, nbr_ipname, nbr_type)
       raise "neighbor #{nbr_ipname} not configured." if !nbr
 
-      @nbr_af = extract(nbr, ip_ver.to_s + '-unicast')
+      @nbr_af = extract(nbr, (ip_ver.to_s + '-unicast').to_sym)
       if !@nbr_af
         # There is no af configuration for the given ip type
         return
@@ -54,11 +54,40 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
 
       @property_hash[:activate]   = extract(@nbr_af, :'activate')
       @property_hash[:allowas_in] = extract(@nbr_af, :'allowas-in')
+      @property_hash[:add_path]   = extract_add_path(@nbr_af)
+
+      val = extract(@nbr_af, :'next-hop-self')
+      val = :false if !val
+      @property_hash[:next_hop_self] = val
+
+      val = extract(@nbr_af, :'sender-side-loop-detection')
+      val = :true if !val
+      @property_hash[:sender_side_loop_detection] = val
+
+      val = @nbr_af.has_key? :'soft-reconfiguration-inbound'
+      val = :false if !val
+      @property_hash[:soft_reconfiguration] = val
+
+      val = extract(@nbr_af, :'distribute-list-name-in')
+      val = '' if !val
+      @property_hash[:distribute_list] = [val]
+
+      val = extract(@nbr_af, :'distribute-list-name-out')
+      val = '' if !val
+      @property_hash[:distribute_list].push(val)
+
+      val = extract(@nbr_af, :'route-map-in')
+      val = '' if !val
+      @property_hash[:route_map] = [val]
+
+      val = extract(@nbr_af, :'route-map-out')
+      val = '' if !val
+      @property_hash[:route_map].push(val)
+
     rescue Exception => e
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end
@@ -66,6 +95,18 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
   def initialize(value = {})
     super(value)
     @property_flush = {}
+  end
+
+  def extract_add_path(nbr_af)
+    apath = extract(nbr_af, :'add-path')
+    ret = ''
+    if apath
+      ret = extract(apath, :'capability')
+      if ret == 'send' || ret == 'both'
+        ret += ' ' + extract(apath, :'count')
+      end
+    end
+    ret
   end
 
   # ip_name is either ip address if type==ip or template name if type==template
@@ -131,7 +172,6 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
         err "Exception in #{__method__}"
         err e.message
         err e.backtrace[0]
-        end_os10_shell
         raise
       end
     end
@@ -140,7 +180,7 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
   def exists?
     info "#{__method__} for #{resource[:asn]} #{resource[:neighbor]}"
     begin
-      init(resource[:neighbor], resource[:type])
+      init(resource[:neighbor], resource[:type], resource[:ip_ver])
       ret = (@nbr_af != nil)
       info "exists? returning #{ret}"
       ret
@@ -148,7 +188,6 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end
@@ -165,7 +204,6 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end
@@ -179,7 +217,6 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end
@@ -233,18 +270,77 @@ Puppet::Type.type(:os10_bgp_neighbor_af).provide(:dellos10) do
             conf_lines << "allowas-in #{val}"
           end
 
+        when :add_path
+          if val.empty?
+            conf_lines << 'no add-path'
+          else
+            conf_lines << "add-path #{val}"
+          end
+
+        when :next_hop_self
+          if val == 'false'
+            conf_lines << 'no next-hop-self'
+          else
+            conf_lines << 'next-hop-self'
+          end
+
+        when :sender_side_loop_detection
+          if val == 'false'
+            conf_lines << 'no sender-side-loop-detection'
+          else
+            conf_lines << 'sender-side-loop-detection'
+          end
+
+        when :soft_reconfiguration
+          if val == 'false'
+            conf_lines << 'no soft-reconfiguration inbound'
+          else
+            conf_lines << 'soft-reconfiguration inbound'
+          end
+
+        when :distribute_list
+          raise "Invalid distribute_list #{val}" if val.length != 2 ||
+                                                    val[0].class != String ||
+                                                    val[1].class != String
+          if !val[0].empty?
+            conf_lines << "distribute-list #{val[0]} in"
+          else
+            conf_lines << 'no distribute-list TEMP in'
+          end
+
+          if !val[1].empty?
+            conf_lines << "distribute-list #{val[1]} out"
+          else
+            conf_lines << 'no distribute-list TEMP out'
+          end
+
+        when :route_map
+          raise "Invalid route_map #{val}" if val.length != 2 ||
+                                           val[0].class != String ||
+                                           val[1].class != String
+          if !val[0].empty?
+            conf_lines << "route-map #{val[0]} in"
+          else
+            conf_lines << 'no route-map TEMP in'
+          end
+
+          if !val[1].empty?
+            conf_lines << "route-map #{val[1]} out"
+          else
+            conf_lines << 'no route-map TEMP out'
+          end
+
         else
           debug "skipping translating #{attr} to CLI"
         end
       end
+
       info conf_lines.to_s
       ecc conf_lines
-      end_os10_shell
     rescue Exception => e
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end

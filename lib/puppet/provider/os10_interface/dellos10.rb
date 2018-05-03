@@ -190,6 +190,7 @@ Puppet::Type.type(:os10_interface).provide(:dellos10) do
       conf_lines = ["interface #{resource[:name]}"]
 
       if !val.empty?
+        conf_lines << 'no switchport'
         conf_lines << "ip address #{val}"
       else
         conf_lines << 'no ip address'
@@ -209,6 +210,7 @@ Puppet::Type.type(:os10_interface).provide(:dellos10) do
       conf_lines = ["interface #{resource[:name]}"]
 
       if val.length
+        conf_lines << 'no switchport'
         conf_lines << "ipv6 address #{val}"
       else
         conf_lines << 'no ipv6 address'
@@ -228,6 +230,7 @@ Puppet::Type.type(:os10_interface).provide(:dellos10) do
       conf_lines = ["interface #{resource[:name]}"]
       case val
       when :true
+        conf_lines << 'no switchport'
         conf_lines << 'ipv6 address autoconfig'
       when :false
         conf_lines << 'no ipv6 address autoconfig'
