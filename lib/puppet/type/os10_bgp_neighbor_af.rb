@@ -19,14 +19,20 @@
 # Sample resource:
 # 
 #   os10_bgp_neighbor_af{'testdc1-af':
-#     require    => Os10_bgp_neighbor['testdc1'],
-#     ensure     => present,
-#     asn        => '65537',
-#     neighbor   => '1.1.1.3',
-#     type       => 'ip',
-#     ip_ver     => 'ipv4',
-#     activate   => 'true',
-#     allowas_in => '9',
+#     require                    => Os10_bgp_neighbor['testdc1'],
+#     ensure                     => present,
+#     asn                        => '65537',
+#     neighbor                   => '1.1.1.3',
+#     type                       => 'ip',
+#     ip_ver                     => 'ipv4',
+#     activate                   => 'true',
+#     allowas_in                 => '9',
+#     add_path                   => 'both 3',
+#     next_hop_self              => 'true',
+#     sender_side_loop_detection => 'true',
+#     soft_reconfiguration       => 'true',
+#     distribute_list            => ['IN', 'OUT'],
+#     route_map                  => ['', 'OUT'],
 #   }
 # 
 #   os10_bgp_neighbor_af{'TEMP1-af':
@@ -95,4 +101,60 @@ Puppet::Type.newtype(:os10_bgp_neighbor_af) do
   newproperty(:allowas_in) do
     desc 'Configure allowed local AS number in as-path. Valid values are 1-10.'
   end
+
+  newproperty(:add_path) do
+    desc 'Configures the setting to Send or Receive multiple paths. Blank '\
+    'string removes the configuration.'
+  end
+
+  newproperty(:distribute_list, array_matching: :all) do
+    desc 'Filter networks in routing updates. Valid parameter is an array of '\
+    'two Prefix list name (max 140 chars) for applying policy to incoming and '\
+    'outgoing routes respectively.'
+
+    def insync?(is)
+      is == should
+    end
+  end
+
+  newproperty(:next_hop_self) do
+    desc 'Enables or Disables the next hop calculation for this neighbor.'
+
+    newvalues(:absent, :true, :false)
+
+    # Generate insync? method which will compare considering false as default
+    Utils::Codegen.mk_insync(self, :false)
+  end
+
+  newproperty(:route_map, array_matching: :all) do
+    desc 'Name of the route map. Valid parameter is an array of two Route-map '\
+    'name (max 140 chars) for filtering incoming and outgoing routing updates.'
+
+    def insync?(is)
+      is == should
+    end
+
+    # There should be ONLY two entries present in the list
+    validate do |v|
+    end
+  end
+
+  newproperty(:sender_side_loop_detection) do
+    desc 'Configures sender side loop detect for neighbor.'
+
+    newvalues(:absent, :true, :false)
+
+    # Generate insync? method which will compare considering true as default
+    Utils::Codegen.mk_insync(self, :true)
+  end
+
+  newproperty(:soft_reconfiguration) do
+    desc 'Configures per neighbor soft reconfiguration.'
+
+    newvalues(:absent, :true, :false)
+
+    # Generate insync? method which will compare considering false as default
+    Utils::Codegen.mk_insync(self, :false)
+  end
+
 end

@@ -73,7 +73,6 @@ Puppet::Type.type(:os10_bgp_af).provide(:dellos10) do
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end
@@ -168,7 +167,6 @@ Puppet::Type.type(:os10_bgp_af).provide(:dellos10) do
         err "Exception in #{__method__}"
         err e.message
         err e.backtrace[0]
-        end_os10_shell
         raise
       end
     end
@@ -185,7 +183,6 @@ Puppet::Type.type(:os10_bgp_af).provide(:dellos10) do
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end
@@ -203,7 +200,6 @@ Puppet::Type.type(:os10_bgp_af).provide(:dellos10) do
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end
@@ -216,7 +212,6 @@ Puppet::Type.type(:os10_bgp_af).provide(:dellos10) do
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end
@@ -325,6 +320,16 @@ Puppet::Type.type(:os10_bgp_af).provide(:dellos10) do
           add = val - @net_addr
           del = @net_addr - val
 
+          # It is important to delete first then create!
+          del.each do |v|
+            l = v.split(' ')
+            if l.length == 2
+              conf_lines << "no network #{l[0]} route-map #{l[1]}"
+            else
+              conf_lines << "no network #{l[0]}"
+            end
+          end
+
           add.each do |v|
             l = v.split(' ')
             if l.length == 2
@@ -334,14 +339,6 @@ Puppet::Type.type(:os10_bgp_af).provide(:dellos10) do
             end
           end
 
-          del.each do |v|
-            l = v.split(' ')
-            if l.length == 2
-              conf_lines << "no network #{l[0]} route-map #{l[1]}"
-            else
-              conf_lines << "no network #{l[0]}"
-            end
-          end
 
         when :redistribute
           # Handle the case of creating from blank
@@ -371,12 +368,10 @@ Puppet::Type.type(:os10_bgp_af).provide(:dellos10) do
       end
       info conf_lines.to_s
       ecc conf_lines
-      end_os10_shell
     rescue Exception => e
       err "Exception in #{__method__}"
       err e.message
       err e.backtrace[0]
-      end_os10_shell
       raise
     end
   end

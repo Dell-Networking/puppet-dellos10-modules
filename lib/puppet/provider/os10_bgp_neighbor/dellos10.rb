@@ -390,7 +390,6 @@ Puppet::Type.type(:os10_bgp_neighbor).provide(:dellos10) do
       info conf_lines.to_s
       ecc conf_lines
 
-      end_os10_shell
     rescue Exception => e
       err "Exception in #{__method__}"
       err e.message

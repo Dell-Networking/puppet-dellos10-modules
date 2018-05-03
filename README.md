@@ -24,16 +24,15 @@ The current version of dellos10 module contains Providers that makes use of OS10
 
 The `dellos10` module is dependant on the following ruby modules:
 
-* `xmlhash`
-* `dellos10shellapi`
+* `os10_devops_ruby_utils`
 
 ## Setup
 
 ### Setup Requirements
 
-#### Installing `libxml` module
+#### Installing `os10_devops_ruby_utils` module
 
-#### Installing `dellos10shellapi` module
+The dellos10 puppet module requires `os10_devops_ruby_utils` module to be installed separately for communicating with the underlying OS10 operating system. The installation procedure can be found at [readthedocs.org](https://readthedocs.org/projects/puppet-dellos-docs/)
 
 ### Beginning with dellos10
 
@@ -359,6 +358,24 @@ Enable the Address Family for this Neighbor.
 ##### `allowas_in`
 Configure allowed local AS number in as-path. Valid values are 1-10.
 
+##### `add_path`
+Configures the setting to Send or Receive multiple paths. Blank string removes the configuration.
+
+##### `distribute_list`
+Filter networks in routing updates. Valid parameter is an array of two Prefix list name (max 140 chars) for applying policy to incoming and outgoing routes respectively.
+
+##### `next_hop_self`
+Enables or Disables the next hop calculation for this neighbor.
+
+##### `route_map`
+Names of the route map. Valid parameter is an array of two Route-map name (max 140 chars) for filtering incoming and outgoing routing updates.
+
+##### `sender_side_loop_detection`
+Configures sender side loop detect for neighbor.
+
+##### `soft_reconfiguration`
+Configures per neighbor soft reconfiguration.
+
 ### Type: os10_lldp
 `os10_lldp` resource type is to used to manage global LLDP configuration in OS10 EE switches. The os10_lldp resource is not an ensurable type and hence does not have an ensure attribute.
 
@@ -373,21 +390,14 @@ This property is a string with a value range of <1-10>. An empty string will rem
 ##### `timer`
 This property is a string with a value range of <5-254>. An empty string will remove the timer value from the LLDP configuration.
 
-<<<<<<< HEAD
-
 ##### `med_fast_start_repeat_count`
 This property is a string with a value range of <1-10>, (default=3). An empty string will remove the med fast start repeat count value from the LLDP configuration.
 
-=======
-##### `med_fast_start_repeat_count`
-This property is a string with a value range of <1-10>, (default=3). An empty string will remove the med fast start repeat count value from the LLDP configuration.
-
->>>>>>> eed90d49509d12294afcf970db637a89d4800169
 ##### `enable`
 This property is a boolean string with value 'true' or 'false' to enable or disable the lldp globally.
 
 ##### `med_network_policy`
-This will be an array of hash entries with the set of hash keys id<1-32>, app, vlan_id<1-4093>, vlan_type<tag/untag>, priority<0-7>, dscp<0-63>. 
+This will be an array of hash entries with the set of hash keys id<1-32>, app<guest-voice, guestvoice-signaling, softphone-voice, streaming-video, video-conferencing, voice-signaling, voice, video-signaling>, vlan_id<1-4093>, vlan_type<tag/untag>, priority<0-7>, dscp<0-63>. 
 
 ### Type: os10_lldp_interface
 `os10_lldp_interface` resource type is to used to manage LLDP configuration per interface in OS10 EE switches. The os10_lldp resource is not an ensurable type and hence does not have an ensure attribute. The per interface name is given as arg for the resource.
