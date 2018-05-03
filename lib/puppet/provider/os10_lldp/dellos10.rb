@@ -47,7 +47,7 @@ Puppet::Type.type(:os10_lldp).provide(:dellos10) do
   # the puppet execution period will not be read.
   def init
     debug 'Caching lldp configuration...'
-    ret = esc ('show running-configuration lldp | display-xml')
+    ret = esc 'show running-configuration lldp | display-xml'
     @lldp = ret[:stdout]['rpc-reply'][:data]
     @lldp_global = @lldp[:'global-params'] || {}
     @lldp_sys = @lldp[:'sys-config'] || {}
@@ -208,10 +208,10 @@ Puppet::Type.type(:os10_lldp).provide(:dellos10) do
   def enable=(val)
     info "os10_lldp::enable=#{val}"
     begin
-      # val would be a string 
+      # val would be a string
       if @lldp_global && @lldp_global[:enable] && val.to_s == 'true'
         ecc ['lldp enable']
-      else
+      elsif val.to_s == 'false'
         ecc ['no lldp enable']
       end
     rescue Exception => e
@@ -229,8 +229,20 @@ Puppet::Type.type(:os10_lldp).provide(:dellos10) do
     info 'os10_lldp::med_network_policy'
     begin
       @is_med_network_policy = @lldp_sys && @lldp_sys[:'media-policy'] || []
-      return [@is_med_network_policy] if @is_med_network_policy.class == Hash
-      return @is_med_network_policy
+      @is_med_network_policy = [@is_med_network_policy] \
+                               if @is_med_network_policy.class == Hash
+      header = ['id', 'app', 'vlan', 'priority', 'dscp',
+                'vlan-type']
+      new_policy = []
+      if @is_med_network_policy
+        @is_med_network_policy.each do |policy|
+          policy[:tagged] = (policy[:tagged] == 'true' ? 'tag' : 'untag')
+        end
+        @is_med_network_policy.each do |policy|
+          new_policy << header.zip(policy.values).to_h
+        end
+      end
+      return new_policy
     rescue Exception => e
       err 'Exception in network policy'
       err e.message
@@ -249,14 +261,15 @@ Puppet::Type.type(:os10_lldp).provide(:dellos10) do
         # this is array subtraction
         remove = med_network_policy - should_med_network_policy
         remove.each do |policy|
-          conf_lines << "no lldp med network-policy #{policy[:'policy-id']}"
+          conf_lines << "no lldp med network-policy #{policy['id']}"
         end
       end
 
       val = {}
       keys = ['id', 'app', 'vlan', 'vlan-type', 'priority', 'dscp']
       if should_med_network_policy
-        should_med_network_policy.each do |policy|
+        add = should_med_network_policy - med_network_policy
+        add.each do |policy|
           keys.each do |key|
             # return none when policy does not have the key
             val[key] = policy[key] || 'none'

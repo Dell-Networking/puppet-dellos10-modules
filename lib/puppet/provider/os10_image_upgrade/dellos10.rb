@@ -17,8 +17,8 @@
 # The provider code will monitor the progress of the installation procedure by
 # periodically polling for the status of the installer. Once the installation is
 # complete the system boot marker is set to the standby partition, where the new
-# image is installed and a reload is triggered. Any unsaved configuration is saved
-# before the reload.
+# image is installed. The system is not reloaded by puppet and has to be
+# reloaded outside the scope of puppet for upgrade to be completed. 
 #
 
 require '/opt/dell/os10/bin/devops/dellos10_shell.rb'
@@ -83,7 +83,7 @@ Puppet::Type.type(:os10_image_upgrade).provide(:dellos10) do
       end
 
       # Now that installer is idle, check for State Detail of both File Transfer
-      # and Installation State before initiating a reload
+      # and Installation State
 
       stat1 = status[:"software-upgrade-status"][:"file-transfer-status"]\
             [:"task-state-detail"]
@@ -93,12 +93,9 @@ Puppet::Type.type(:os10_image_upgrade).provide(:dellos10) do
       if (stat1 == 'Completed: No error') && (stat2 == 'Completed: Success')
         debug "Download state is #{stat1}"
         debug "Install state is #{stat2}"
-        info 'reloading to standby partition'
+        info 'Setting boot to standby partition'
         esc 'boot system standby'
         esc 'write memory'
-        esc 'reload'
-        sleep(1)
-        esc 'yes'
       else
         err "Download state is #{stat1}"
         err "Install state is #{stat2}"
