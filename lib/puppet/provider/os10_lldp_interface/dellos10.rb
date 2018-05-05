@@ -56,10 +56,11 @@ Puppet::Type.type(:os10_lldp_interface).provide(:dellos10) do
     super(*args)
     begin
       debug 'Caching lldp interface related configuration...'
-      ret = esc ('show running-configuration interface ' +
-                 @interface_name + ' | display-xml')
-      @tlv_ret = esc ('show running-configuration interface ' + @interface_name)
+      ret = esc 'show running-configuration interface ' +
+                 @interface_name + ' | display-xml'
+      @tlv_ret = esc 'show running-configuration interface ' + @interface_name
       @lldp_intf = ret[:stdout]['rpc-reply'][:data][:interfaces][:interface]
+      info "lld int #{@lldp_intf}"
     rescue Exception => e
       err 'Exception in init segment'
       err e.message
@@ -72,7 +73,7 @@ Puppet::Type.type(:os10_lldp_interface).provide(:dellos10) do
   def receive
     info 'os10_lldp_interface::receive'
     begin
-      @lldp_interface_lldp = @lldp_intf[:lldp] || ''
+      @lldp_interface_lldp = @lldp_intf[:lldp] || {}
       return @lldp_interface_lldp[:'rx-enable'] || ''
     rescue Exception => e
       err 'Exception in receive'
