@@ -108,6 +108,7 @@ Puppet::Type.type(:os10_snmp).provide(:dellos10) do
   end
 
   def location=(str)
+    str = "\"#{str}\"" if str.include?(' ')
     info "os10_snmp::location= #{str}"
     begin
       if !str.empty?
