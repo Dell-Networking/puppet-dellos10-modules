@@ -20,7 +20,7 @@ def get_instances_from_running_config(entity, &block)
   begin
     debug "Fetching #{entity} config..."
     cmd = "show running-configuration #{entity} | display-xml"
-    hret = execute_show_command(cmd)
+    hret = execute_show_command(cmd, timeout=60)
     raise "No rpc-reply from '#{cmd}'" unless hret[:stdout] and hret[:stdout].length > 0
     data = hret[:stdout]['rpc-reply'][:data]
     res = block.call(data)
